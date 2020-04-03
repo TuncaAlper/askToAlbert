@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from "react-dom";
 import axios from "axios";
 
 import './App.css';
@@ -8,11 +7,13 @@ export default function App() {
 
   const [postalCode, setPostalCode] = useState({ value: "1066PL", send: false })
   const [data, setData] = useState()
+  const [count, setCount] = useState(0)
 
   const [load, setLoad] = useState(false);
   const [error, setError] = useState();
 
   useEffect(() => {
+    // console.log("a")
     if (postalCode.send) {
       axios
         .get(`https://www.ah.nl//service/rest/kies-moment/bezorgen/${postalCode.value}`)
@@ -24,10 +25,37 @@ export default function App() {
           setError(err.message)
           setLoad(true)
         })
-    }
-    return () => { setPostalCode({ ...postalCode, send: false }) }
 
-  }, [postalCode.send])
+      return () => {
+        setPostalCode(prevState => ({
+          ...prevState,
+          send: false
+        }))
+      }
+    }
+
+    if (data) {
+      const interval = setInterval(() => {
+        setPostalCode(prevState => ({ ...prevState, send: true }))
+      }, 1000 * 60 * 5)
+
+      return () => {
+        clearInterval(interval)
+      }
+    }
+  }, [postalCode.send, postalCode.value, data])
+
+  // useEffect(() => {
+  //   if (data) {
+  //     const interval = setInterval(() => {
+  //       setPostalCode({ ...postalCode, send: true })
+  //     }, 1000 * 60)
+
+  //     return () => {
+  //       clearInterval(interval)
+  //     }
+  //   }
+  // }, [data])
 
   const changePostalCode = (e) => {
     e.preventDefault()
@@ -36,10 +64,15 @@ export default function App() {
   const sendRequestToAh = (e) => {
     e.preventDefault()
     setPostalCode({ ...postalCode, send: true })
+    setCount(count + 1)
+  }
+  const goBackButton = (e) => {
+    e.preventDefault()
+    setData(null)
+    setCount(0)
   }
 
-
-  console.log("Delivery", data, postalCode)
+  // console.log("Delivery", data, postalCode)
   if (!data) {
     return (
       <div className="App">
@@ -58,16 +91,17 @@ export default function App() {
   } else if (data && load && !error) {
     const deliveryDates = data.deliveryDates.filter(res => res.deliveryTimeSlots.length > 1)
     // const emptyDates = deliveryDates.filter(res => res.deliveryTimeSlots.map(filt => filt.state) !== "full")
-    const emptyDates = deliveryDates.filter(res => res.deliveryTimeSlots.map(filt => filt.state) === "full")
-    console.log(deliveryDates, "DD", emptyDates)
+    const emptyDates = deliveryDates.filter(res => res.deliveryTimeSlots.map(filt => filt.state).includes("selectable"))
+    // const emptyDatesNew = deliveryDates.filter(res => res.deliveryTimeSlots.filter(filt => filt.state).includes("selectable"))
+    // console.log("DD", emptyDates, emptyDatesNew)
     return (
       <div>
         {postalCode.value}'s Result
         <>
           <button onClick={e => sendRequestToAh(e)}>refresh</button>
-          <button onClick={e => setData(null)}>Go back</button>
+          <button onClick={e => goBackButton(e)}>Go back</button>
         </>
-        <div style={{ color: "red" }}>
+        <div style={{ color: "green" }}>
           {emptyDates.map((res, index) => <p key={index}>{res.date}: {res.deliveryTimeSlots.map((res, ind) => <li key={ind}>{res.from}-{res.to}  {res.state}</li>)}<br /></p>)}
         </div>
         <div>
