@@ -5,7 +5,8 @@ import './App.css';
 
 export default function App() {
 
-  const [postalCode, setPostalCode] = useState({ value: "1066PL", send: false })
+  const [postalCode, setPostalCode] = useState({ value: "", send: false })
+  const [reqTime, setReqTime] = useState(5);
   const [data, setData] = useState()
   const [count, setCount] = useState(0)
 
@@ -13,7 +14,6 @@ export default function App() {
   const [error, setError] = useState();
 
   useEffect(() => {
-    // console.log("a")
     if (postalCode.send) {
       axios
         .get(`https://www.ah.nl//service/rest/kies-moment/bezorgen/${postalCode.value}`)
@@ -37,13 +37,13 @@ export default function App() {
     if (data) {
       const interval = setInterval(() => {
         setPostalCode(prevState => ({ ...prevState, send: true }))
-      }, 1000 * 60 * 5)
+      }, 1000 * 60 * reqTime)
 
       return () => {
         clearInterval(interval)
       }
     }
-  }, [postalCode.send, postalCode.value, data])
+  }, [postalCode.send, postalCode.value, data, reqTime])
 
   // useEffect(() => {
   //   if (data) {
@@ -61,10 +61,18 @@ export default function App() {
     e.preventDefault()
     setPostalCode({ ...postalCode, value: e.target.value.replace(/\s+/g, '') })
   }
+  const changeReqTime = (e) => {
+    e.preventDefault()
+    setReqTime(e.target.value)
+  }
   const sendRequestToAh = (e) => {
     e.preventDefault()
-    setPostalCode({ ...postalCode, send: true })
-    setCount(count + 1)
+    if (!!postalCode.value && !!reqTime) {
+      setPostalCode({ ...postalCode, send: true })
+      setCount(count + 1)
+    } else {
+      alert("Please type your Postal Code")
+    }
   }
   const goBackButton = (e) => {
     e.preventDefault()
@@ -72,14 +80,17 @@ export default function App() {
     setCount(0)
   }
 
-  // console.log("Delivery", data, postalCode)
   if (!data) {
     return (
       <div className="App">
         <div className="app-postal-code">
           <label>Please insert your postal code:  <input type="text" onChange={e => changePostalCode(e)} placeholder={postalCode.value} /></label>
-          <button onClick={e => sendRequestToAh(e)}>Ask to AH</button>
+          <label>Refresh time in minutes: <input type="num" onChange={e => changeReqTime(e)} placeholder={reqTime} /></label>
+
+          <button className="button-blue" onClick={e => sendRequestToAh(e)}>Ask to Albert</button>
+          <p>advised refresh time is 5min.</p>
         </div>
+
       </div>
     )
   } else if (!load) {
@@ -89,23 +100,66 @@ export default function App() {
       </div>
     )
   } else if (data && load && !error) {
+
     const deliveryDates = data.deliveryDates.filter(res => res.deliveryTimeSlots.length > 1)
-    // const emptyDates = deliveryDates.filter(res => res.deliveryTimeSlots.map(filt => filt.state) !== "full")
-    const emptyDates = deliveryDates.filter(res => res.deliveryTimeSlots.map(filt => filt.state).includes("selectable"))
+    // const emptyDates = deliveryDates.filter(res => res.deliveryTimeSlots.map(filt => filt.state).includes("selectable"))
+    const emptyDates = deliveryDates.filter(res => res.deliveryTimeSlots.some(filt => filt.state === "selectable"))
+
     // const emptyDatesNew = deliveryDates.filter(res => res.deliveryTimeSlots.filter(filt => filt.state).includes("selectable"))
-    // console.log("DD", emptyDates, emptyDatesNew)
+
+
     return (
-      <div>
-        {postalCode.value}'s Result
-        <>
-          <button onClick={e => sendRequestToAh(e)}>refresh</button>
-          <button onClick={e => goBackButton(e)}>Go back</button>
-        </>
-        <div style={{ color: "green" }}>
-          {emptyDates.map((res, index) => <p key={index}>{res.date}: {res.deliveryTimeSlots.map((res, ind) => <li key={ind}>{res.from}-{res.to}  {res.state}</li>)}<br /></p>)}
+      <div className="App">
+        <h2>
+          {postalCode.value}'s Result
+        <br />
+          <button className="button-blue" onClick={e => goBackButton(e)}>Go back</button>
+          <button className="button-blue" onClick={e => sendRequestToAh(e)}>Refresh</button>
+
+        </h2>
+        <h3 style={{ color: "black" }}>Available Dates..</h3>
+        <div className="container-empty-date">
+          {emptyDates.length > 0 ?
+            emptyDates.map((res, index) =>
+              <div key={index}>
+                <h3>{res.date}: </h3> {res.deliveryTimeSlots.map((res, ind) =>
+                  <div className="div-li-empty-date" key={ind}>
+                    <li className="li-empty-date">
+                      {
+                        res.navItem ?
+                          <a
+                            href={'https://www.ah.nl' + res.navItem.link.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="anchor-empty-date"
+                          >
+                            {res.from}-{res.to}  {res.state}
+                          </a>
+                          : 'full'
+                      }
+                    </li>
+                  </div>
+                )}
+                <br />
+              </div>
+            ) : <h2 style={{ color: "red" }}>Could not find available date, yet. </h2 >
+          }
         </div>
         <div>
-          {deliveryDates.map((res, index) => <p key={index}>{res.date}: {res.deliveryTimeSlots.map((res, ind) => <li key={ind}>{res.from}-{res.to}  {res.state}</li>)}<br /></p>)}
+          <h3 style={{ color: "black" }}>All Dates..</h3>
+          <div className="container-empty-date">
+            {deliveryDates.map((res, index) =>
+              <div key={index}>
+                <h4>{res.date}: </h4> {res.deliveryTimeSlots.map((res, ind) =>
+                  <div className="div-li-empty-date" key={ind}>
+                    <li className="li-empty-date">
+                      {res.from}-{res.to}  {res.state}
+                    </li>
+                  </div>
+                )}
+                <br />
+              </div>)}
+          </div>
         </div>
       </div>
     )
@@ -116,18 +170,4 @@ export default function App() {
       </div>
     )
   }
-
 }
-// async function fetchData() {
-  // const result = await axios(`https://www.ah.nl//service/rest/kies-moment/bezorgen/1066PL`)
-  // setData(result.data)
-// }
-
-    // async function fetchData() {
-    // const result = await axios(`https://www.ah.nl//service/rest/kies-moment/bezorgen/${postalCode.value}`)
-    // const result = await axios(`https://www.ah.nl//service/rest/kies-moment/bezorgen/1066PL`)
-    // if (result) { setData("a") }
-    // console.log("RESULT", result.data['_embedded']['lanes']['3']['_embedded']['items']['0']['_embedded'], data)
-    // }
-
-    // setDeliveryDates(data.find(res => res.deliveryTimeSlots.length > 1))
