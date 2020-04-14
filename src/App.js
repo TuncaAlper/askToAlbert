@@ -142,7 +142,7 @@ export default function App() {
                 )}
                 <br />
               </div>
-            ) : <h2 style={{ color: "red" }}>Could not find available date, yet. </h2 >
+            ) : <h2 style={{ color: "red" }}>Could not find available date, yet :) </h2 >
           }
         </div>
         <div>
