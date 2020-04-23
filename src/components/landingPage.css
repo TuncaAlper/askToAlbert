@@ -9,6 +9,11 @@
     align-items: center;
     justify-content: center;
   }
+.landing-footer{
+  position: absolute;
+  bottom: 0;
+  font-size: 13px;
+  }
 h2{
     margin-left: 20px;
     display: inline-block;
