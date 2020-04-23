@@ -4,21 +4,23 @@ import axios from "axios";
 import './landingPage.css';
 import Timer from './timer';
 import LoadSpinner from './loadSpinner';
+import { baseUrl } from '../constants';
 
 export default function LandingPage() {
 
-    const [postalCode, setPostalCode] = useState({ value: "", send: false })
+    const [postalCode, setPostalCode] = useState({ value: "", send: false });
     const [reqTime, setReqTime] = useState(5);
-    const [data, setData] = useState()
+    const [data, setData] = useState();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState();
+    const [pageError, setPageError] = useState(false);
 
     useEffect(() => {
         if (postalCode.send) {
             setLoading(true)
             axios
-                .get(`https://www.ah.nl//service/rest/kies-moment/bezorgen/${postalCode.value}`)
+                .get(`${baseUrl}/${postalCode.value}`)
                 .then(res => {
                     setData(res.data['_embedded']['lanes']['3']['_embedded']['items']['0']['_embedded'])
                     setLoading(false)
@@ -47,8 +49,9 @@ export default function LandingPage() {
         e.preventDefault()
         if (!!postalCode.value && !!reqTime) {
             setPostalCode(prevState => ({ ...prevState, send: true }))
+            setPageError(false)
         } else {
-            alert("Please type your Postal Code")
+            setPageError(true)
         }
     }
     const goBackButton = (e) => {
@@ -71,12 +74,20 @@ export default function LandingPage() {
             <div className="Landing">
                 <div className="landing-postal-code">
                     <label>Please insert your postal code:  <input type="text" onChange={e => changePostalCode(e)} placeholder={postalCode.value} /></label>
+                    <br />
                     <label>Refresh time in minutes: <input type="num" onChange={e => changeReqTime(e)} placeholder={reqTime} /></label>
-
+                    <br />
                     <button className="button-blue" onClick={e => sendRequestToAh(e)}>Ask to Albert</button>
                     <p>advised refresh time is 5min.</p>
+                    {pageError && <p style={{ color: "red" }}>Please type your Postal Code!</p>}
+                    <div className="landing-footer" >
+                        <p>
+                            Created by Alper Tunca
+                            <br />
+                            to Contact, alpertunca@gmail.com
+                        </p>
+                    </div>
                 </div>
-
             </div>
         )
     } else if (data && !loading && !error) {
