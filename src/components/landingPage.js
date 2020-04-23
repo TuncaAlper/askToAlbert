@@ -4,7 +4,6 @@ import axios from "axios";
 import './landingPage.css';
 import Timer from './timer';
 import LoadSpinner from './loadSpinner';
-import { baseUrl } from '../constants';
 
 export default function LandingPage() {
 
@@ -20,7 +19,7 @@ export default function LandingPage() {
         if (postalCode.send) {
             setLoading(true)
             axios
-                .get(`${baseUrl}/${postalCode.value}`)
+                .get(`https://www.ah.nl//service/rest/kies-moment/bezorgen/${postalCode.value}`)
                 .then(res => {
                     setData(res.data['_embedded']['lanes']['3']['_embedded']['items']['0']['_embedded'])
                     setLoading(false)
