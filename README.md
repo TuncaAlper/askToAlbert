@@ -1,6 +1,6 @@
 # Project
 
-This project is written for personal development. Project is created with React as a front end framework over Javascript. Preferred to use React-Hooks instead of Class components, and deployed to heroku. To see the live version, you can click the link below. 
+This project is written for personal development. Project is created with React as a front end framework over Javascript. Preferred to use React-Hooks instead of Class components, and deployed to Heroku. To see the live version, you can click the link below. 
 
 https://asktoalbert.herokuapp.com/
 
